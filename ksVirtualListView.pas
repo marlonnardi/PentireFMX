@@ -534,6 +534,7 @@ type
     function AddTextBold(x, y: single; AText: string; AFontColor: TAlphaColor; AFontSize: integer): TksVListItemTextObject; overload;
     function AddText(x, y, AWidth: single; AText: string): TksVListItemTextObject; overload;
     function AddDetailText(y: single; AText: string): TksVListItemTextObject; overload;
+    function AddDetailText(y: single; AText: string; AFontSize: integer): TksVListItemTextObject; overload;
     function AddImage(x, y, AWidth, AHeight: single; ABitmap: TBitmap): TksVListItemImageObject;
     function AddSwitch(x, y: single; AChecked: Boolean; const AID: string = ''): TksVListItemSwitchObject;
     function DrawRect(x, y, AWidth, AHeight, ACornerRadius: single; AStroke, AFill: TAlphaColor): TksVListItemShapeObject;
@@ -1066,6 +1067,20 @@ begin
   Result.TextSettings.FontColor := claGray;
   {$ENDIF}
   Result.Font.Size := 14;
+end;
+
+function TksVListItem.AddDetailText(y: single; AText: string;
+  AFontSize: integer): TksVListItemTextObject;
+begin
+  Result := AddText(0, y, AText);
+  Result.HorzAlign := TAlignment.taRightJustify;
+  Result.TextSettings.HorzAlign := TTextAlign.Trailing;
+  {$IFDEF IOS}
+  Result.TextSettings.FontColor := claDodgerblue;
+  {$ELSE}
+  Result.TextSettings.FontColor := claGray;
+  {$ENDIF}
+  Result.Font.Size := AFontSize;
 end;
 
 function TksVListItem.AddImage(x, y, AWidth, AHeight: single; ABitmap: TBitmap): TksVListItemImageObject;
