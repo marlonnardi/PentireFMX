@@ -27,7 +27,7 @@ unit ksAccessories;
 interface
 
 uses FMX.Graphics, System.UITypes, System.UIConsts, Types, System.Generics.Collections,
-  FMX.Types;
+  FMX.Types, System.Classes;
 
 type
   //---------------------------------------------------------------------------------------
