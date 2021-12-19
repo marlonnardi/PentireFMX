@@ -590,7 +590,7 @@ type
     property Objects: TksVListObjectList read FObjects;
   end;
 
-  TksVListItemList = class(tobjectlist<tksvlistitem>)
+  TksVListItemList = class(tobjectlist<TksVListItem>)
   private
     [weak]FOwner: TksVirtualListView;
     procedure UpdateItemRects;
@@ -610,7 +610,8 @@ type
     function AddDateTimeSelector(ATitle, ASubTitle: string; ASelected: TDateTime; AImage: TBitmap; ATagStr: string): TksVListItem;
     function AddTimeSelector(ATitle, ASubTitle: string; ASelected: TDateTime; AImage: TBitmap; ATagStr: string): TksVListItem;
     function AddInputSelector(ATitle, ASubTitle, ADetail, ATagStr: string): TksVListItem;
-    function AddHeader(AText: string): TksVListItem;
+    function AddHeader(AText: string): TksVListItem; overload;
+    function AddHeader(AText: string; AFontSize: integer): TksVListItem; overload;
     function InsertHeader(AIndex: integer;AText: string): TksVListItem;
     function AddSeperator(const AText: string = ''): TksVListItem;
     function AddChatBubble(AText, ASender: string; AColor, ATextColor: TAlphaColor; ALeftAlign: Boolean): TksVListItem;
@@ -3208,6 +3209,20 @@ begin
   Result.FSelectedDateTime := ASelected;
   Result.SelectorType := TksVListItemSelectorType.ksSelectorDateTime;
   Result.TagStr := ATagStr;
+end;
+
+function TksVListItemList.AddHeader(AText: string;
+  AFontSize: integer): TksVListItem;
+begin
+  Result := Add(AText, '', '');
+  Result.Background := GetColorOrDefault(FOwner.Appearence.HeaderColor, claNull);
+  Result.Title.Font.Size := AFontSize;
+  Result.Title.TextSettings.FontColor := claBlack;
+  Result.Detail.Font.Size := AFontSize;
+  Result.Detail.TextSettings.FontColor := claDimgray;
+  Result.Purpose := Header;
+  Result.CanSelect := False;
+  Result.Title.VertAlign := TVerticalAlignment.taAlignBottom;
 end;
 
 function TksVListItemList.AddTimeSelector(ATitle, ASubTitle: string; ASelected: TDateTime;
