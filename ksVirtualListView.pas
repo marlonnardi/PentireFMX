@@ -2197,20 +2197,21 @@ begin
 
   if AHandled = False then
   begin
-   aTask := TTask.Create (procedure ()
-   begin
-      Sleep(100);
-      TThread.Synchronize(TThread.Current,
-        procedure
-        begin
-            if Assigned(FOnItemClick) then
-              FOnItemClick(Self, AItem);
-        end
-      );
-   end);
-  aTask.Start;
-
-
+    if Assigned(FOnItemClick) then
+      FOnItemClick(Self, AItem);
+      {TODO: Removed Thread }
+//    aTask := TTask.Create (procedure ()
+//    begin
+//      Sleep(100);
+//      TThread.Synchronize(TThread.Current,
+//        procedure
+//        begin
+//            if Assigned(FOnItemClick) then
+//              FOnItemClick(Self, AItem);
+//        end
+//      );
+//    end);
+//    aTask.Start;
   end;
 end;
 
