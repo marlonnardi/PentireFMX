@@ -2169,7 +2169,7 @@ procedure TksVirtualListView.DoItemClicked(AItem: TksVListItem;
   ACallClickEvent: Boolean);
 var
   AHandled: Boolean;
-  ATask: ITask;
+//  ATask: ITask;
 begin
   if AItem = nil then
     Exit;
