@@ -534,6 +534,7 @@ type
     function AddText(x, y: single; AText: string; AFontColor: TAlphaColor; AFontSize: integer): TksVListItemTextObject; overload;
     function AddText(x, y, AWidth: single; AText: string): TksVListItemTextObject; overload;
     function AddDetailText(y: single; AText: string): TksVListItemTextObject; overload;
+    function AddDetailText(y: single; AText: string; AFontSize: integer): TksVListItemTextObject; overload;
     function AddImage(x, y, AWidth, AHeight: single; ABitmap: TBitmap): TksVListItemImageObject;
     function AddSwitch(x, y: single; AChecked: Boolean; const AID: string = ''): TksVListItemSwitchObject;
     function DrawRect(x, y, AWidth, AHeight, ACornerRadius: single; AStroke, AFill: TAlphaColor): TksVListItemShapeObject;
@@ -609,7 +610,8 @@ type
     function AddDateTimeSelector(ATitle, ASubTitle: string; ASelected: TDateTime; AImage: TBitmap; ATagStr: string): TksVListItem;
     function AddTimeSelector(ATitle, ASubTitle: string; ASelected: TDateTime; AImage: TBitmap; ATagStr: string): TksVListItem;
     function AddInputSelector(ATitle, ASubTitle, ADetail, ATagStr: string): TksVListItem;
-    function AddHeader(AText: string): TksVListItem;
+    function AddHeader(AText: string): TksVListItem; overload;
+    function AddHeader(AText: string; AFontSize: integer): TksVListItem; overload;
     function InsertHeader(AIndex: integer;AText: string): TksVListItem;
     function AddSeperator(const AText: string = ''): TksVListItem;
     function AddChatBubble(AText, ASender: string; AColor, ATextColor: TAlphaColor; ALeftAlign: Boolean): TksVListItem;
@@ -1066,6 +1068,20 @@ begin
   Result.TextSettings.FontColor := claGray;
   {$ENDIF}
   Result.Font.Size := 14;
+end;
+
+function TksVListItem.AddDetailText(y: single; AText: string;
+  AFontSize: integer): TksVListItemTextObject;
+begin
+  Result := AddText(0, y, AText);
+  Result.HorzAlign := TAlignment.taRightJustify;
+  Result.TextSettings.HorzAlign := TTextAlign.Trailing;
+  {$IFDEF IOS}
+  Result.TextSettings.FontColor := claDodgerblue;
+  {$ELSE}
+  Result.TextSettings.FontColor := claGray;
+  {$ENDIF}
+  Result.Font.Size := AFontSize;
 end;
 
 function TksVListItem.AddImage(x, y, AWidth, AHeight: single; ABitmap: TBitmap): TksVListItemImageObject;
@@ -3221,6 +3237,20 @@ begin
   Result.FSelectedDateTime := ASelected;
   Result.SelectorType := TksVListItemSelectorType.ksSelectorDateTime;
   Result.TagStr := ATagStr;
+end;
+
+function TksVListItemList.AddHeader(AText: string;
+  AFontSize: integer): TksVListItem;
+begin
+  Result := Add(AText, '', '');
+  Result.Background := GetColorOrDefault(FOwner.Appearence.HeaderColor, claNull);
+  Result.Title.Font.Size := AFontSize;
+  Result.Title.TextSettings.FontColor := claBlack;
+  Result.Detail.Font.Size := AFontSize;
+  Result.Detail.TextSettings.FontColor := claDimgray;
+  Result.Purpose := Header;
+  Result.CanSelect := False;
+  Result.Title.VertAlign := TVerticalAlignment.taAlignBottom;
 end;
 
 function TksVListItemList.AddTimeSelector(ATitle, ASubTitle: string; ASelected: TDateTime;
