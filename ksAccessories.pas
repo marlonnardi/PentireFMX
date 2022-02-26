@@ -74,7 +74,7 @@ var
 
 implementation
 
-uses FMX.Platform, SysUtils, FMX.Styles, FMX.Styles.Objects, Math, Classes;
+uses FMX.Platform, SysUtils, FMX.Styles, FMX.Styles.Objects, Math;
 
 var
   AScreenScale: single;

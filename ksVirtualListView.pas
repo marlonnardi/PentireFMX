@@ -610,7 +610,7 @@ type
     function AddDateTimeSelector(ATitle, ASubTitle: string; ASelected: TDateTime; AImage: TBitmap; ATagStr: string): TksVListItem;
     function AddTimeSelector(ATitle, ASubTitle: string; ASelected: TDateTime; AImage: TBitmap; ATagStr: string): TksVListItem;
     function AddInputSelector(ATitle, ASubTitle, ADetail, ATagStr: string): TksVListItem;
-    function AddHeader(AText: string): TksVListItem;
+    function AddHeader(AText: string): TksVListItem; overload;
     function AddHeader(AText: string; AFontSize: integer): TksVListItem; overload;
     function InsertHeader(AIndex: integer;AText: string): TksVListItem;
     function AddSeperator(const AText: string = ''): TksVListItem;

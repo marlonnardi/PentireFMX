@@ -9,21 +9,21 @@ package PentireFMX;
 {$EXTENDEDSYNTAX ON}
 {$IMPORTEDDATA ON}
 {$IOCHECKS ON}
-{$LOCALSYMBOLS ON}
+{$LOCALSYMBOLS OFF}
 {$LONGSTRINGS ON}
 {$OPENSTRINGS ON}
-{$OPTIMIZATION OFF}
+{$OPTIMIZATION ON}
 {$OVERFLOWCHECKS OFF}
 {$RANGECHECKS OFF}
-{$REFERENCEINFO ON}
+{$REFERENCEINFO OFF}
 {$SAFEDIVIDE OFF}
-{$STACKFRAMES ON}
+{$STACKFRAMES OFF}
 {$TYPEDADDRESS OFF}
 {$VARSTRINGCHECKS ON}
 {$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
-{$DEFINE DEBUG}
+{$DEFINE RELEASE}
 {$ENDIF IMPLICITBUILDING}
 {$IMPLICITBUILD ON}
 
@@ -47,7 +47,10 @@ contains
   ksAccessories in 'ksAccessories.pas',
   ksToolbar in 'ksToolbar.pas',
   ksCircleProgress in 'ksCircleProgress.pas',
-  ksPinCode in 'ksPinCode.pas';
+  ksPinCode in 'ksPinCode.pas',
+  ksCommon in 'ksCommon.pas',
+  ksProgressIndicator in 'ksProgressIndicator.pas';
 
 end.
+
 
