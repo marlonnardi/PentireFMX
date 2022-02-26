@@ -2839,7 +2839,6 @@ begin
       end;
       ATimer := 0;
     end;
-
   end;
 end;
 

@@ -175,12 +175,6 @@ begin
   ).Start;
 end;
 
-procedure TksPickerService.DoActionSheetDismiss(Sender: TObject;
-  ButtonIndex: Integer);
-begin
-  DoHide(Sender);
-end;
-
 {$ENDIF}
 
 
@@ -197,6 +191,12 @@ procedure TksPickerService.DoDateTimeSelected(Sender: TObject;
 begin
   if Assigned(FOnDateTimeSelected) then
     FOnDateTimeSelected(Self, ADateTime);
+end;
+
+procedure TksPickerService.DoActionSheetDismiss(Sender: TObject;
+  ButtonIndex: Integer);
+begin
+  DoHide(Sender);
 end;
 {$ENDIF}
 
