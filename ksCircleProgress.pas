@@ -33,11 +33,7 @@ type
 		ksCircleCustom);
 
   [ComponentPlatformsAttribute(
-    pidWin32 or
-    pidWin64 or
-    pidiOSDevice32 or pidiOSDevice64 or
-    pidiOSSimulator32 or pidiOSSimulator64 or
-    pidAndroid32Arm or pidAndroid64Arm
+    pidAllPlatforms
     )]
 
 	TksCircleProgress = class(TControl)

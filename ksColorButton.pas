@@ -94,7 +94,7 @@ begin
   FStyle := ksbsGreen;
   Width := 100;
   Height := 40;
-  FBorderRadius := 0;
+  //FBorderRadius := 0;
   UpdateButton;
 end;
 
@@ -145,6 +145,8 @@ begin
   if FBorderRadius <> Value then
   begin
     FBorderRadius := Value;
+    XRadius := Value;
+    YRadius := Value;
     UpdateButton;
   end;
 end;

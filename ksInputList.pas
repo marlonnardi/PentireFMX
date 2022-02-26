@@ -28,7 +28,7 @@ interface
 
 uses System.Classes, FMX.Controls, FMX.InertialMovement, System.Types,
   System.Generics.Collections, FMX.Graphics, System.UITypes, FMX.Layouts, FMX.Types,
-  FMX.Objects, FMX.Edit, FMX.StdCtrls, FMX.Controls.Presentation, System.Threading,
+  FMX.Objects, FMX.Edit, FMX.StdCtrls, FMX.Controls.Presentation,
   FMX.ListBox, Json, FMX.Pickers, System.UIConsts, FMX.TextLayout, FMX.Forms;
 
   {.$DEFINE DEBUG_BOXES}
@@ -89,6 +89,7 @@ type
     FReadOnly: Boolean;
     FTextColor: TAlphaColor;
     FDetailTextColor: TAlphaColor;
+    FSlideButtonWidth: integer;
     function GetItemRect: TRectF;
     function GetAccessoryWidth(const AAddPadding: Boolean = False): single;
     procedure SetTitle(const Value: string);
@@ -121,6 +122,8 @@ type
     property ItemRect: TRectF read GetItemRect;
     procedure SetReadOnly(const Value: Boolean); virtual;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
+    procedure ShowSwipeButtons;
+    procedure HideSwipeButtons;
   public
     constructor Create(AInputList: TksInputList); virtual;
     destructor Destroy; override;
@@ -269,8 +272,10 @@ type
     function CreateControl: TPresentedControl; override;
     procedure Reset; override;
     procedure ClickControl; override;
+
     procedure MouseDown; override;
   public
+    procedure DrawToCanvas(ACanvas: TCanvas); override;
     property Edit: TksEdit read GetEdit;
 
   end;
@@ -457,6 +462,7 @@ type
   TksInputList = class(TVertScrollBox)
   private
     FBuffer: TForm;
+    FScrollMonitor: TThread;
     FPickerService: IFMXPickerService;
     FCanvas: TksInputListCanvas;
     FItems: TksInputListItems;
@@ -493,6 +499,10 @@ type
     procedure SetValue(AName: string; const Value: string);
     procedure SetShowDividers(const Value: Boolean);
     procedure SetBackgroundColor(const Value: TAlphaColor);
+    procedure SwipeLeft(AEventInfo: TGestureEventInfo);
+    procedure SwipeRight(AEventInfo: TGestureEventInfo);
+    //function ItemAtPos(x, y: Extended): TksBaseInputListItem;
+    procedure HideAllSwipeButtons(AIgnoreItem: TksBaseInputListItem);
   protected
     procedure Paint; override;
     procedure Resize; override;
@@ -501,7 +511,7 @@ type
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Single); override;
     procedure ViewportPositionChange(const OldViewportPosition, NewViewportPosition: TPointF;
                                      const ContentSizeChanged: boolean); override;
-
+    procedure CMGesture(var EventInfo: TGestureEventInfo); override;
   public
 
 
@@ -802,6 +812,13 @@ begin
   end;
 end;
 
+procedure TksInputList.CMGesture(var EventInfo: TGestureEventInfo);
+begin
+  inherited;
+  if EventInfo.GestureID = 1 then SwipeLeft(EventInfo);
+  if EventInfo.GestureID = 2 then SwipeRight(EventInfo);
+end;
+
 constructor TksInputList.Create(AOwner: TComponent);
 begin
   inherited;
@@ -829,13 +846,10 @@ end;
 
 procedure TksInputList.CreateScrollMonitor;
 begin
-  //FScrollMonitor := TThread.CreateAnonymousThread (
-  //  procedure
-  //  begin
-
-  TTask.Run(
+  FScrollMonitor := TThread.CreateAnonymousThread(
     procedure
     begin
+
       while not Application.Terminated do
       begin
         sleep (200);
@@ -849,7 +863,7 @@ begin
           begin
             if (FLastScrollPos = VScrollBarValue) and (FControlsVisible = False) then
             begin
-              TThread.Queue(nil,
+              TThread.Synchronize(TThread.CurrentThread,
                 procedure
                 begin
                   ShowOnScreenControls;
@@ -859,14 +873,11 @@ begin
           end;
           FLastScrollPos := VScrollBarValue;
         except
-          // application terminated?
         end;
       end;
     end
   );
-  //  end
-  //);
-  //FScrollMonitor.Start;
+  FScrollMonitor.Start;
 end;
 
 destructor TksInputList.Destroy;
@@ -874,6 +885,7 @@ var
   AItem: TksBaseInputListItem;
   c: TPresentedControl;
 begin
+  FScrollMonitor.Terminate;
   //if FScrollMonitor <> nil then
    // FScrollMonitor.Free;
 
@@ -927,8 +939,9 @@ begin
     {$ENDIF}
     //HideAllControls;
     HidePickers;
-    ShowOnScreenControls;
     InvalidateRect(ClipRect);
+    FControlsVisible := False;
+    ShowOnScreenControls;
   end;
 end;
 
@@ -976,6 +989,14 @@ begin
     if AItem is TksInputListItemWithControl then
     begin
       c := (AItem as TksInputListItemWithControl).FControl;
+
+      if (c is TksEdit) then
+      begin
+        (c as TksEdit).ControlType := TControlType.Styled;
+        (AItem as TksInputListItemWithControl).ClearCache;
+      end;
+
+
       if c.Parent <> FBuffer then
       begin
         FBuffer.AddObject(c);
@@ -987,11 +1008,38 @@ begin
   FControlsVisible := False;
 end;
 
+procedure TksInputList.HideAllSwipeButtons(AIgnoreItem: TksBaseInputListItem);
+var
+  AItem: TksBaseInputListItem;
+begin
+  for AItem in FItems do
+  begin
+    if AItem <> AIgnoreItem then
+      AItem.HideSwipeButtons;
+  end;
+end;
+
 procedure TksInputList.HidePickers;
 begin
   if FPickerService <> nil then
     FPickerService.CloseAllPickers;
 end;
+
+{
+function TksInputList.ItemAtPos(x, y: Extended): TksBaseInputListItem;
+var
+  AItem: TksBaseInputListItem;
+begin
+  Result := nil;
+  for AItem in FItems do
+  begin
+    if PtInRect(AItem.ItemRect, PointF(x, y+FLastScrollPos)) then
+    begin
+      Result := AItem;
+      Exit;
+    end;
+  end;
+end;  }
 
 procedure TksInputList.LoadFromJson(AJsonData: string; AStructure,
   AData: Boolean);
@@ -1043,7 +1091,6 @@ procedure TksInputList.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
   Y: Single);
 var
   AItem: TksBaseInputListItem;
-  ATask: ITask;
   ATapEvent: Boolean;
 begin
   inherited;
@@ -1066,30 +1113,32 @@ begin
       begin
         FMouseDownItem := AItem;
         FMouseDownTime := MilliSecondOfTheDay(Now);
-        aTask := TTask.Create (procedure ()
-        begin
-          Sleep(100);
+        TThread.CreateAnonymousThread(
+          procedure
+          begin
+            Sleep(100);
 
-          ATapEvent := ((FMousePos.Y) > (FMouseDownPos.Y - 10)) and ((FMousePos.Y) < (FMouseDownPos.Y + 10));
-          TThread.Synchronize(nil,procedure
-            var
-              AItem: TksBaseInputListItem;
-            begin
-              if FMouseDown then
+            ATapEvent := ((FMousePos.Y) > (FMouseDownPos.Y - 10)) and ((FMousePos.Y) < (FMouseDownPos.Y + 10));
+            TThread.Synchronize(TThread.CurrentThread,
+              procedure
+              var
+                AItem: TksBaseInputListItem;
               begin
-                for AItem in FItems do
+                if FMouseDown then
                 begin
-                  if AItem.FMouseDown then
-                    AItem.MouseUp(False);
-                end;
-                FMouseDownItem.MouseDown;
+                  for AItem in FItems do
+                  begin
+                    if AItem.FMouseDown then
+                      AItem.MouseUp(False);
+                  end;
+                  FMouseDownItem.MouseDown;
 
-              end;
-              Application.ProcessMessages;
-            end
-          );
-        end);
-        aTask.Start;
+                end;
+                Application.ProcessMessages;
+              end
+            );
+          end
+        ).Start;
       end;
 
     end;
@@ -1163,7 +1212,9 @@ end;
 
 procedure TksInputList.Paint;
 begin
-  if BackgroundColor <> claNull then
+  if BackgroundColor = claNull then
+    Canvas.ClearRect(ClipRect, claWhitesmoke)
+  else
     Canvas.ClearRect(ClipRect, BackgroundColor);
   inherited;
 end;
@@ -1328,6 +1379,7 @@ begin
 
   if FUpdateCount > 0 then
     Exit;
+
   r := ContentRect;
   OffsetRect(r, 0, VScrollBarValue);
 
@@ -1336,23 +1388,67 @@ begin
     if (AItem is TksInputListItemWithControl) then
     begin
       ACtrlItem := (AItem as TksInputListItemWithControl);
+      if (ACtrlItem is TksInputListEditItem) then
+        (ACtrlItem as TksInputListEditItem).Edit.Width := Width/2;
+
       if ACtrlItem.Enabled then
       begin
         if IntersectRect(r, ACtrlItem.FItemRect) then
         begin
           if ACtrlItem.FControl.Parent = FBuffer then
           begin
+
             ACtrlItem.UpdateControlPosition;
-            ACtrlItem.FControl.Visible := True;
-            ACtrlItem.ClearCache;
+
+            if (ACtrlItem.FControl is TksEdit) then
+              (ACtrlItem.FControl as TksEdit).ControlType := TControlType.Platform;
             Self.AddObject(ACtrlItem.FControl);
+
           end;
         end;
       end;
     end;
   end;
   FControlsVisible := True;
+end;
 
+procedure TksInputList.SwipeLeft(AEventInfo: TGestureEventInfo);
+var
+  //AItem: TksBaseInputListItem;
+  AWidth: integer;
+  ICount: integer;
+begin
+  for AWidth := 0 to 10 do
+  begin
+    for ICount := 0 to FItems.Count-1 do
+    begin
+      FItems[ICount].FSlideButtonWidth := (AWidth * 10);
+      FItems[Icount].Changed;
+    end;
+    //InvalidateRect(ClipRect);
+    Repaint;
+
+  end;
+
+
+  {AItem := ItemAtPos(AEventInfo.Location.X, AEventInfo.Location.Y);
+  if AItem <> nil then
+  begin
+    HideAllSwipeButtons(AItem);
+    AItem.ShowSwipeButtons;
+  end;}
+end;
+
+procedure TksInputList.SwipeRight(AEventInfo: TGestureEventInfo);
+//var
+  //AItem: TksBaseInputListItem;
+begin
+  HideAllSwipeButtons(nil);
+  {AItem := ItemAtPos(AEventInfo.TapLocation.X, AEventInfo.TapLocation.Y);
+  if AItem <> nil then
+  begin
+    AItem.HideSwipeButtons;
+  end;}
 end;
 
 { TksBaseInputListItem }
@@ -1380,6 +1476,7 @@ begin
   FReadOnly := False;
   FEnabled := True;
   FSelectedColor := $FFEAEAEA;
+  FSlideButtonWidth := 0;
 end;
 
 destructor TksBaseInputListItem.Destroy;
@@ -1423,6 +1520,7 @@ var
   AAccRect: TRectF;
   AAcc: TBitmap;
   r: TRectF;
+  AButtonRect: TRectF;
 begin
   UpdateRects;
   AState := ACanvas.SaveState;
@@ -1501,6 +1599,15 @@ begin
       ACanvas.FillText(FContentRect, FDetail, False, 1, [], TTextAlign.Trailing, TTextAlign.Center);
     end;
     DoCustomDraw(ACanvas);
+
+    // draw the button...
+    if FSlideButtonWidth > 0 then
+    begin
+      ACanvas.Fill.Color := claRed;
+      AButtonRect := FItemRect;
+      AButtonRect.Left := AButtonRect.Right-FSlideButtonWidth;
+      ACanvas.FillRect(AButtonRect, 0, 0, AllCorners, 1);
+    end;
   finally
     ACanvas.RestoreState(AState);
   end;
@@ -1537,6 +1644,21 @@ begin
   Result := '';
 end;
 
+procedure TksBaseInputListItem.HideSwipeButtons;
+var
+  ICount: integer;
+begin
+  if FSlideButtonWidth > 0 then
+  begin
+    for ICount := 20 downto 0 do
+    begin
+      FSlideButtonWidth := ICount*5;
+      Changed;
+    end;
+  end;
+end;
+
+
 procedure TksBaseInputListItem.ItemClick;
 begin
   //
@@ -1547,7 +1669,7 @@ procedure TksBaseInputListItem.LoadFromJson(AJson: TJsonObject; AStructure,
 begin
   if AStructure then  LoadStructure(AJson);
   if AData then Value := AJson.Values['value'].Value;
-  
+
 end;
 
 procedure TksBaseInputListItem.LoadStructure(AJson: TJSONObject);
@@ -1726,6 +1848,17 @@ end;
 procedure TksBaseInputListItem.SetValue(const AValue: string);
 begin
   // overridden in descendant classes.
+end;
+
+procedure TksBaseInputListItem.ShowSwipeButtons;
+var
+  ICount: integer;
+begin
+  for ICount := 0 to 20 do
+  begin
+    FSlideButtonWidth := ICount*5;
+    Changed;
+  end;
 end;
 
 procedure TksBaseInputListItem.UpdateRects;
@@ -2110,6 +2243,7 @@ end;
 
 procedure TksInputListEditItem.ClickControl;
 begin
+  //FControl.ControlType := TControlType.Platform;
   inherited ClickControl;
 end;
 
@@ -2122,6 +2256,13 @@ begin
   (Result as TksEdit).TextSettings.HorzAlign := TTextAlign.Trailing;
   (Result as TksEdit).CanFocus := True;
   (Result as TksEdit).DisableFocusEffect := False;
+  //
+end;
+
+procedure TksInputListEditItem.DrawToCanvas(ACanvas: TCanvas);
+begin
+  //FControl.ControlType := TControlType.Styled;
+  inherited DrawToCanvas(ACanvas);
 end;
 
 class function TksInputListEditItem.GetClassID: string;
@@ -2203,6 +2344,7 @@ end;
 
 procedure TksInputListItemWithControl.ClickControl;
 begin
+  ClearCache;
   //FksInputList.HidePickers;
 end;
 
@@ -2341,12 +2483,14 @@ end;
 
 procedure TksInputListSwitchItem.SwitchChange(Sender: TObject);
 var
-  ATask: ITask;
+  Thread: TThread;
 begin
   FCached.Clear(claNull);
-  ATask := TTask.Create (procedure ()
-   begin
-     TThread.Synchronize(nil,procedure
+  Thread := TThread.CreateAnonymousThread(
+    procedure
+    begin
+      Sleep(250);
+      TThread.Synchronize(TThread.CurrentThread,procedure
       begin
         if Assigned(FksInputList.OnItemSwitchChanged) then
         begin
@@ -2354,7 +2498,7 @@ begin
         end;
       end);
    end);
-  ATask.Start;
+  Thread.Start;
 end;
 
 { TksInputListCheckBoxItem }
@@ -2573,22 +2717,25 @@ end;
 
 procedure TksInputListSelectorItem.DoSelectorChanged(Sender: TObject);
 var
-  ATask: ITask;
+  Thread: TThread;
 begin
   if FCombo.ItemIndex > -1 then
     Value := FCombo.Items[FCombo.ItemIndex];
-  aTask := TTask.Create (procedure ()
-   begin
+  Thread := TThread.CreateAnonymousThread(
+    procedure
+    begin
       Sleep(200);
       // Copy files here
-      TThread.Synchronize(nil, procedure
-  begin
+      TThread.Synchronize(TThread.CurrentThread, procedure
+        begin
 
-      if Assigned(FksInputList.OnSelectorItemSelected) then
-        FksInputList.OnSelectorItemSelected(FksInputList, Self, ID, Value);
-    end);
-   end);
- aTask.Start;
+          if Assigned(FksInputList.OnSelectorItemSelected) then
+            FksInputList.OnSelectorItemSelected(FksInputList, Self, ID, Value);
+        end
+      );
+    end
+  );
+ Thread.Start;
 end;
 
 class function TksInputListSelectorItem.GetClassID: string;
@@ -3175,6 +3322,7 @@ finalization
   ATextLayout.Free;
 
 end.
+
 
 
 
