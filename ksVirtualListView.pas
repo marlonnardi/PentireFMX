@@ -2369,6 +2369,7 @@ var
 begin
   if FLongTapTimer = 0 then
     Exit;
+
   KillTimer(FLongTapTimer);
 
   if FAniCalc = nil then
@@ -2378,8 +2379,11 @@ begin
     if (FMousePt.y > FMouseDownPos.y - 4) and (FMousePt.y < FMouseDownPos.y + 4)
     then
     begin
-      AItem := FItems.ItemAtPos(FMousePt.x, FMousePt.y);
-      DoItemClicked(AItem, False);
+      if FTimerService <> nil then
+      begin
+        AItem := FItems.ItemAtPos(FMousePt.x, FMousePt.y);
+        DoItemClicked(AItem, False);
+      end;
     end;
   end;
 end;
