@@ -2379,11 +2379,8 @@ begin
     if (FMousePt.y > FMouseDownPos.y - 4) and (FMousePt.y < FMouseDownPos.y + 4)
     then
     begin
-      if FTimerService <> nil then
-      begin
-        AItem := FItems.ItemAtPos(FMousePt.x, FMousePt.y);
-        DoItemClicked(AItem, False);
-      end;
+      AItem := FItems.ItemAtPos(FMousePt.x, FMousePt.y);
+      DoItemClicked(AItem, False);
     end;
   end;
 end;
