@@ -2068,7 +2068,7 @@ end;
 constructor TksVirtualListView.Create(AOwner: TComponent);
 begin
   inherited;
-  TPlatformServices.Current.SupportsPlatformService(IFMXTimerService, FTimerService);
+  //TPlatformServices.Current.SupportsPlatformService(IFMXTimerService, FTimerService); // TODO: Bug change context IOS
 
   FAppearence := TksVirtualListViewAppearence.Create(Self);
   FNoItemsText := TksNoItemsText.Create(Self);
