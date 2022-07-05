@@ -2111,7 +2111,8 @@ end;
 
 procedure TksVirtualListView.CreateAniCalc5(AUpdateLimits: Boolean);
 begin
-  FreeAndNil(FAniCalc);
+  if Assigned(FAniCalc) then
+    FreeAndNil(FAniCalc);
   FAniCalc := TksAniCalc.Create(nil);
   FAniCalc.OnChanged := AniCalcChange;
   FAniCalc.ViewportPositionF := PointF(0, FScrollPos);
@@ -3493,7 +3494,7 @@ begin
   {$IFDEF MSWINDOWS}
   FTextSettings.Font.Family := 'Arial';
   {$ENDIF}
-  FTextSettings.Trimming := TTextTrimming.Character;
+  //FTextSettings.Trimming := TTextTrimming.Character;
   FTextSettings.OnChanged := TextSettingsChanged;
   FMaxWidth := 0;
   FActualTextWidth := 0;
