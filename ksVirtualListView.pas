@@ -2068,7 +2068,7 @@ end;
 constructor TksVirtualListView.Create(AOwner: TComponent);
 begin
   inherited;
-  //TPlatformServices.Current.SupportsPlatformService(IFMXTimerService, FTimerService); // TODO: Bug change context IOS
+  TPlatformServices.Current.SupportsPlatformService(IFMXTimerService, FTimerService);
 
   FAppearence := TksVirtualListViewAppearence.Create(Self);
   FNoItemsText := TksNoItemsText.Create(Self);
@@ -2380,8 +2380,11 @@ begin
     if (FMousePt.y > FMouseDownPos.y - 4) and (FMousePt.y < FMouseDownPos.y + 4)
     then
     begin
-      AItem := FItems.ItemAtPos(FMousePt.x, FMousePt.y);
-      DoItemClicked(AItem, False);
+      if FTimerService <> nil then
+      begin
+        AItem := FItems.ItemAtPos(FMousePt.x, FMousePt.y);
+        DoItemClicked(AItem, False);
+      end;
     end;
   end;
 end;
