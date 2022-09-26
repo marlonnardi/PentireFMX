@@ -1362,8 +1362,8 @@ begin
 end;
 
 procedure TksVListItem.SelectItem(ADeselectAfter: integer);
-var
-  Thread: TThread;
+//var
+//  Thread: TThread;
 begin
   if (FPurpose <> None) or (FCanSelect = False) then
     Exit;
@@ -1371,19 +1371,20 @@ begin
   FOwner.FOwner.ItemIndex := FIndex;
   if ADeselectAfter > 0 then
   begin
-    Thread := TThread.CreateAnonymousThread (
-      procedure
-      begin
-        Sleep(ADeselectAfter);
-        TThread.Synchronize(TThread.CurrentThread,
-          procedure
-          begin
-             Selected := False;
-          end
-        );
-      end
-    );
-    Thread.start;
+    Selected := False;
+//    Thread := TThread.CreateAnonymousThread (
+//      procedure
+//      begin
+//        Sleep(ADeselectAfter);
+//        TThread.Synchronize(TThread.CurrentThread,
+//          procedure
+//          begin
+//             Selected := False;
+//          end
+//        );
+//      end
+//    );
+//    Thread.start;
   end;
 end;
 
@@ -2068,7 +2069,7 @@ end;
 constructor TksVirtualListView.Create(AOwner: TComponent);
 begin
   inherited;
-  TPlatformServices.Current.SupportsPlatformService(IFMXTimerService, FTimerService);
+  //TPlatformServices.Current.SupportsPlatformService(IFMXTimerService, FTimerService);
 
   FAppearence := TksVirtualListViewAppearence.Create(Self);
   FNoItemsText := TksNoItemsText.Create(Self);
@@ -2182,26 +2183,28 @@ begin
   SelectItem(AItem);
   Invalidate;
 
-  Application.ProcessMessages;
+  //Application.ProcessMessages;
 
   //FMouseDownItem := nil;
   AItem.DoClicked(AHandled);
 
   if AHandled = False then
   begin
-    TThread.CreateAnonymousThread(
-      procedure
-      begin
-        Sleep(100);
-        TThread.Synchronize(TThread.CurrentThread,
-          procedure
-          begin
-              if Assigned(FOnItemClick) then
-                FOnItemClick(Self, AItem);
-          end
-        );
-      end
-    ).Start;
+    if Assigned(FOnItemClick) then
+      FOnItemClick(Self, AItem);
+//    TThread.CreateAnonymousThread(
+//      procedure
+//      begin
+//        Sleep(100);
+//        TThread.Synchronize(TThread.CurrentThread,
+//          procedure
+//          begin
+//              if Assigned(FOnItemClick) then
+//                FOnItemClick(Self, AItem);
+//          end
+//        );
+//      end
+//    ).Start;
   end;
 end;
 
@@ -3492,12 +3495,12 @@ constructor TksVListItemTextObject.Create(AItem: TksVListItem);
 begin
   inherited Create(AItem);
   FTextSize := PointF(0, 0);
-  FTextLayout := nil;//TTextLayoutManager.DefaultTextLayout.Create;
+  FTextLayout := nil;
   FTextSettings := TTextSettings.Create(nil);
   {$IFDEF MSWINDOWS}
   FTextSettings.Font.Family := 'Arial';
   {$ENDIF}
-  //FTextSettings.Trimming := TTextTrimming.Character;
+  //FTextSettings.Trimming := TTextTrimming.Character; // bug when using skia
   FTextSettings.OnChanged := TextSettingsChanged;
   FMaxWidth := 0;
   FActualTextWidth := 0;
