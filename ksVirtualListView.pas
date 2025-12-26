@@ -375,7 +375,6 @@ type
     property Opacity: single read FOpacity write SetOpacity;
     property ImageShape: TksImageShape read FImageShape write SetImageShape;
     property Badge: integer read FBadge write SetBadge default 0;
-
   end;
 
   TksVListItemSwitchObject = class(TksVListItemBaseObject)
@@ -1246,7 +1245,9 @@ begin
   Result.ViewportPositionF := PointF(FOffset, 0);
   Result.Animation := True;
   Result.Averaging := True;
+  {$IF CompilerVersion < 37.0}
   Result.Interval := 8;
+  {$ENDIF}
   Result.OnChanged := AOnChange;
 end;
 
@@ -2120,7 +2121,9 @@ begin
   FAniCalc.UpdatePosImmediately;
   FAniCalc.Animation := True;
   FAniCalc.Averaging := True;
+  {$IF CompilerVersion < 37.0}
   FAniCalc.Interval := 8;
+  {$ENDIF}
   FAniCalc.BoundsAnimation := True;
   FAniCalc.TouchTracking := [ttVertical];
   FAniCalc.OnChanged := AniCalcChange;
