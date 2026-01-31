@@ -143,11 +143,21 @@ end;
 
 destructor TksPickerService.Destroy;
 begin
+  {$IF CompilerVersion >= 23.0}
+  FPicker.Free;
+  FDatePicker.Free;
+  FTimePicker.Free;
+  {$ELSE}
   FPicker.DisposeOf;
   FDatePicker.DisposeOf;
   FTimePicker.DisposeOf;
+  {$ENDIF}
   {$IFDEF IOS}
+    {$IF CompilerVersion >= 23.0}
+  FDateTimePicker.Free;
+    {$ELSE}
   FDateTimePicker.DisposeOf;
+    {$ENDIF}
   {$ENDIF}
   FreeAndNil(FPickerITems);
   {$IFDEF DPF}

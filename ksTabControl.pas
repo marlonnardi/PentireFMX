@@ -1,4 +1,4 @@
-{*******************************************************************************
+﻿{*******************************************************************************
 *                                                                              *
 *  PentireFMX                                                                  *
 *                                                                              *
@@ -544,7 +544,11 @@ end;
 destructor TksTabControl.Destroy;
 begin
   FreeAndNil(FTabs);
+  {$IF CompilerVersion >= 23.0}
+  FAppearence.Free;
+  {$ELSE}
   FAppearence.DisposeOf;
+  {$ENDIF}
   inherited;
 end;
 
@@ -1070,7 +1074,11 @@ begin
     Exit;
   if (Action = TCollectionNotification.cnRemoved) and (not (csDesigning in FTabControl.ComponentState)) then
   begin
+    {$IF CompilerVersion >= 23.0}
+    Value.Free;
+    {$ELSE}
     Value.DisposeOf;
+    {$ENDIF}
     FTabControl.UpdateTabs;
   end;
 end;
